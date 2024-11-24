@@ -2,30 +2,28 @@ name: Run Playwright Tests Twice a Day
 
 on:
   schedule:
-    - cron: '0 0,12 * * *'  # This cron expression runs the workflow at midnight and noon UTC
+    - cron: '0 0,12 * * *' # Runs at midnight and noon UTC every day
+  workflow_dispatch: # Allows manual trigger from the GitHub Actions UI
 
 jobs:
   test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+      # Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
+      # Set up Node.js
       - name: Set up Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
-          node-version: '16'  # Specify the Node.js version you want to use
+          node-version: 18 # Use the version you need for your project
 
+      # Install dependencies
       - name: Install dependencies
-        run: |
-          npm ci  # If you're using npm and have a package-lock.json
-          # or if you're using yarn, replace it with: yarn install
+        run: npm ci
 
-      - name: Install Playwright Browsers
-        run: |
-          npx playwright install --with-deps  # Install browsers needed for Playwright
-
+      # Run Playwright tests
       - name: Run Playwright tests
-        run: |
-          npx playwright test  # Run the Playwright tests
+        run: npx playwright test
