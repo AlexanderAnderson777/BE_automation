@@ -52,5 +52,7 @@ jobs:
 
             Regards,
             GitHub Actions
-          to: alexander.v.anderson@gmail.com
+          to: |
+            alexander.v.kolesnyk@gmail.com,
+            Forverblin@gmail.com
           from: ${{ secrets.GMAIL_USERNAME }}
