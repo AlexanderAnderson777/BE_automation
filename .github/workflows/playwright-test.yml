@@ -52,5 +52,5 @@ jobs:
 
             Regards,
             GitHub Actions
-          to: recipient@example.com
+          to: alexander.v.anderson@gmail.com
           from: ${{ secrets.GMAIL_USERNAME }}
