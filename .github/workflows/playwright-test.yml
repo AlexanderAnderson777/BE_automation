@@ -27,3 +27,30 @@ jobs:
       # Run Playwright tests
       - name: Run Playwright tests
         run: npx playwright test
+        id: playwright-tests # Assign an ID for referencing results
+
+      # Send Email Notification
+      - name: Send Email Notification
+        if: always() # Ensures email is sent regardless of success or failure
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.GMAIL_USERNAME }}
+          password: ${{ secrets.GMAIL_APP_PASSWORD }}
+          subject: Playwright Test Run Completed - ${{ job.status }}
+          body: |
+            Hello,
+
+            The Playwright test run has completed.
+            - Status: ${{ job.status }}
+            - Repository: ${{ github.repository }}
+            - Workflow: ${{ github.workflow }}
+            - Run ID: ${{ github.run_id }}
+
+            Details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            Regards,
+            GitHub Actions
+          to: recipient@example.com
+          from: ${{ secrets.GMAIL_USERNAME }}
