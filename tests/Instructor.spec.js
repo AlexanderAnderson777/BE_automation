@@ -155,7 +155,7 @@ await page.click('.anticon-user > svg');
 
 // Click on the element with text color red
 await page.click('.text-red-400');
-
+// hello
     // await page.pause();
   });
 });
