@@ -67,7 +67,7 @@ jobs:
           echo "" >> summary.txt
           echo "Here is the summary of Playwright test runs for the day:" >> summary.txt
           echo "" >> summary.txt
-          gh run list --limit 24 --json conclusion,name,workflowName,status,startTime,endTime -q '.[] | "\(.workflowName): \(.status) (\(.conclusion))"' >> summary.txt
+          gh run list --limit 24 --json conclusion,name,workflowName,status,startedAt -q '.[] | "\(.workflowName): \(.status) (\(.conclusion)) started at: \(.startedAt)"' >> summary.txt
           echo "" >> summary.txt
           echo "Regards," >> summary.txt
           echo "GitHub Actions" >> summary.txt
