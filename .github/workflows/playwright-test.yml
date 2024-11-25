@@ -54,7 +54,7 @@ jobs:
   # Send daily summary email
   daily_summary:
     runs-on: ubuntu-latest
-    if: github.event.schedule == '0 0 * * *' # Only runs for the daily summary trigger
+    if: github.event_name == 'schedule' && github.event.schedule == '0 0 * * *' || github.event_name == 'workflow_dispatch' # Runs on the schedule or manual trigger
 
     steps:
       - name: Checkout repository
