@@ -13,26 +13,21 @@ jobs:
     if: github.event_name != 'workflow_dispatch' || github.event.schedule != '0 0 * * *' # Exclude the daily summary run
 
     steps:
-      # Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Set up Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
-      # Install dependencies
       - name: Install dependencies
         run: npm ci
 
-      # Run Playwright tests
       - name: Run Playwright tests
         run: npx playwright test
         id: playwright-tests # Assign an ID for referencing results
 
-      # Send Email Notification for Failed Tests
       - name: Send Failure Notification
         if: failure() # Only runs if the Playwright tests fail
         uses: dawidd6/action-send-mail@v3
@@ -62,17 +57,11 @@ jobs:
     if: github.event.schedule == '0 0 * * *' # Only runs for the daily summary trigger
 
     steps:
-      # Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Set up GH_TOKEN for authentication
-      - name: Set GH_TOKEN
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-
-      # Generate daily summary
       - name: Generate Daily Summary
+        id: generate-summary
         run: |
           echo "Hello," > summary.txt
           echo "" >> summary.txt
@@ -82,10 +71,14 @@ jobs:
           echo "" >> summary.txt
           echo "Regards," >> summary.txt
           echo "GitHub Actions" >> summary.txt
+          cat summary.txt
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
-      # Send Daily Summary Email
+      - name: Save Summary Content
+        id: save-summary
+        run: echo "::set-output name=summary::$(cat summary.txt)"
+
       - name: Send Daily Summary Email
         uses: dawidd6/action-send-mail@v3
         with:
@@ -94,6 +87,6 @@ jobs:
           username: ${{ secrets.GMAIL_USERNAME }}
           password: ${{ secrets.GMAIL_APP_PASSWORD }}
           subject: Daily Playwright Test Summary
-          body: $(cat summary.txt)
+          body: ${{ steps.save-summary.outputs.summary }}
           to: alexander.v.kolesnyk@gmail.com
           from: ${{ secrets.GMAIL_USERNAME }}
