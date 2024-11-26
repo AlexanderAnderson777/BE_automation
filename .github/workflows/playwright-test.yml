@@ -54,6 +54,7 @@ jobs:
   # Send daily summary email
   daily_summary:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -65,12 +66,17 @@ jobs:
           echo "" >> summary.txt
           echo "Here is the summary of Playwright test runs for the day:" >> summary.txt
           echo "" >> summary.txt
+          # List last 24 runs
           gh run list --limit 24 --json conclusion,name,workflowName,status,createdAt -q '.[] | "\(.workflowName): \(.status) (\(.conclusion))"' >> summary.txt
           echo "" >> summary.txt
           echo "Regards," >> summary.txt
           echo "GitHub Actions" >> summary.txt
+          cat summary.txt # Print the summary file for debugging
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Verify Summary Content
+        run: cat summary.txt
 
       - name: Send Daily Summary Email
         uses: dawidd6/action-send-mail@v3
