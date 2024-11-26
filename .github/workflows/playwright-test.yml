@@ -1,16 +1,16 @@
-name: Run Playwright Tests Every Hour and Send Daily Summary
+name: Run Playwright Tests and Send Daily Summary
 
 on:
   schedule:
     - cron: '0 * * * *' # Runs every hour
     - cron: '0 0 * * *' # Runs at midnight UTC for the daily summary
-  workflow_dispatch: # Allows manual trigger from the GitHub Actions UI
+  workflow_dispatch: # Allows manual trigger
 
 jobs:
-  # Run hourly Playwright tests
+  # Hourly test runs
   hourly_tests:
     runs-on: ubuntu-latest
-    if: github.event_name != 'workflow_dispatch' || github.event.schedule != '0 0 * * *' # Exclude the daily summary run
+    if: github.event_name == 'schedule' && github.event.schedule != '0 0 * * *'
 
     steps:
       - name: Checkout repository
@@ -29,14 +29,14 @@ jobs:
         id: playwright-tests
 
       - name: Send Failure Notification
-        if: failure() # Only runs if the Playwright tests fail
+        if: failure()
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
           server_port: 587
           username: ${{ secrets.GMAIL_USERNAME }}
           password: ${{ secrets.GMAIL_APP_PASSWORD }}
-          subject: Playwright Test Run Failed - ${{ job.status }}
+          subject: Playwright Test Run Failed
           body: |
             Hello,
 
@@ -51,32 +51,27 @@ jobs:
           to: alexander.v.anderson@gmail.com
           from: ${{ secrets.GMAIL_USERNAME }}
 
-  # Send daily summary email
+  # Daily summary email
   daily_summary:
     runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' && github.event.schedule == '0 0 * * *'
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Generate Daily Summary
-        id: generate-summary
-        run: |
-          echo "Hello," > summary.txt
-          echo "" >> summary.txt
-          echo "Here is the summary of Playwright test runs for the day:" >> summary.txt
-          echo "" >> summary.txt
-          # List last 24 runs
-          gh run list --limit 24 --json conclusion,name,workflowName,status,createdAt -q '.[] | "\(.workflowName): \(.status) (\(.conclusion))"' >> summary.txt
-          echo "" >> summary.txt
-          echo "Regards," >> summary.txt
-          echo "GitHub Actions" >> summary.txt
-          cat summary.txt # Print the summary file for debugging
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
 
-      - name: Verify Summary Content
-        run: cat summary.txt
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Zip Playwright Report
+        run: |
+          zip -r playwright-report.zip playwright-report/
+        id: zip-report
 
       - name: Send Daily Summary Email
         uses: dawidd6/action-send-mail@v3
@@ -86,6 +81,13 @@ jobs:
           username: ${{ secrets.GMAIL_USERNAME }}
           password: ${{ secrets.GMAIL_APP_PASSWORD }}
           subject: Daily Playwright Test Summary
-          body: ${{ steps.generate-summary.outputs.summary }}
+          body: |
+            Hello,
+
+            Attached is the Playwright HTML report summary for today.
+
+            Regards,
+            GitHub Actions
           to: alexander.v.kolesnyk@gmail.com
           from: ${{ secrets.GMAIL_USERNAME }}
+          attachments: playwright-report.zip
