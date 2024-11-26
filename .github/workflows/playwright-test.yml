@@ -2,16 +2,13 @@ name: Run Playwright Tests and Send Notifications
 
 on:
   schedule:
-    - cron: '0 * * * *' # Runs every hour
     - cron: '0 0 * * *' # Runs daily at midnight UTC
   workflow_dispatch: # Allows manual trigger from the GitHub Actions UI
 
 jobs:
-  # Run hourly Playwright tests
-  hourly_tests:
+  # Run Playwright tests
+  run_tests:
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'schedule' && github.event.schedule != '0 0 * * *') # Allow manual triggers or hourly runs
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -63,35 +60,30 @@ jobs:
           to: alexander.v.anderson@gmail.com
           from: ${{ secrets.GMAIL_USERNAME }}
 
-  # Send daily summary email
+  # Send daily report email
   daily_summary:
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'schedule' && github.event.schedule == '0 0 * * *') # Allow manual triggers or daily runs
+    needs: run_tests # Ensure the test run completes before sending the email
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Collect all Playwright reports
-        run: |
-          mkdir daily_reports
-          find . -name "playwright-report.zip" -exec cp {} daily_reports/ \;
-
-      - name: Send Daily Summary Email
+      - name: Send Daily Report Email
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
           server_port: 587
           username: ${{ secrets.GMAIL_USERNAME }}
           password: ${{ secrets.GMAIL_APP_PASSWORD }}
-          subject: Daily Playwright Test Summary
+          subject: Daily Playwright Test Report
           body: |
             Hello,
 
-            Here are all the Playwright HTML reports generated in the last 24 hours.
+            Here is the Playwright test report generated for the day.
 
             Regards,
             GitHub Actions
-          to: alexander.v.kolesnyk@gmail.com
+          to: alexander.v.anderson@gmail.com
           from: ${{ secrets.GMAIL_USERNAME }}
-          attachments: daily_reports/* # Attach all reports
+          attachments: playwright-report.zip # Attach the Playwright report
