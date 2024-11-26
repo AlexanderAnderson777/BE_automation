@@ -26,7 +26,7 @@ jobs:
 
       - name: Run Playwright tests
         run: npx playwright test
-        id: playwright-tests # Assign an ID for referencing results
+        id: playwright-tests
 
       - name: Send Failure Notification
         if: failure() # Only runs if the Playwright tests fail
@@ -54,8 +54,6 @@ jobs:
   # Send daily summary email
   daily_summary:
     runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' && github.event.schedule == '0 0 * * *' || github.event_name == 'workflow_dispatch' # Runs on the schedule or manual trigger
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -67,17 +65,12 @@ jobs:
           echo "" >> summary.txt
           echo "Here is the summary of Playwright test runs for the day:" >> summary.txt
           echo "" >> summary.txt
-          gh run list --limit 24 --json conclusion,name,workflowName,status,startedAt -q '.[] | "\(.workflowName): \(.status) (\(.conclusion)) started at: \(.startedAt)"' >> summary.txt
+          gh run list --limit 24 --json conclusion,name,workflowName,status,createdAt -q '.[] | "\(.workflowName): \(.status) (\(.conclusion))"' >> summary.txt
           echo "" >> summary.txt
           echo "Regards," >> summary.txt
           echo "GitHub Actions" >> summary.txt
-          cat summary.txt
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-
-      - name: Save Summary Content
-        id: save-summary
-        run: echo "::set-output name=summary::$(cat summary.txt)"
 
       - name: Send Daily Summary Email
         uses: dawidd6/action-send-mail@v3
@@ -87,6 +80,6 @@ jobs:
           username: ${{ secrets.GMAIL_USERNAME }}
           password: ${{ secrets.GMAIL_APP_PASSWORD }}
           subject: Daily Playwright Test Summary
-          body: ${{ steps.save-summary.outputs.summary }}
+          body: ${{ steps.generate-summary.outputs.summary }}
           to: alexander.v.kolesnyk@gmail.com
           from: ${{ secrets.GMAIL_USERNAME }}
