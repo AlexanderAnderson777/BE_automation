@@ -1,16 +1,16 @@
-name: Run Playwright Tests and Send Daily Summary
+name: Run Playwright Tests and Send Notifications
 
 on:
   schedule:
     - cron: '0 * * * *' # Runs every hour
-    - cron: '0 0 * * *' # Runs at midnight UTC for the daily summary
-  workflow_dispatch: # Allows manual trigger
+    - cron: '0 0 * * *' # Runs daily at midnight UTC
+  workflow_dispatch: # Allows manual trigger from the GitHub Actions UI
 
 jobs:
-  # Hourly test runs
+  # Run hourly Playwright tests
   hourly_tests:
     runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' && github.event.schedule != '0 0 * * *'
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'schedule' && github.event.schedule != '0 0 * * *') # Allow manual triggers or hourly runs
 
     steps:
       - name: Checkout repository
@@ -25,18 +25,30 @@ jobs:
         run: npm ci
 
       - name: Run Playwright tests
-        run: npx playwright test
+        run: npx playwright test --reporter=html
         id: playwright-tests
 
+      - name: Archive Playwright HTML report
+        if: always() # Ensure this runs even if tests fail
+        run: zip -r playwright-report.zip playwright-report/
+        continue-on-error: true
+        id: archive-report
+
+      - name: Upload Playwright report artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: playwright-report
+          path: playwright-report.zip
+
       - name: Send Failure Notification
-        if: failure()
+        if: failure() # Only runs if Playwright tests fail
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
           server_port: 587
           username: ${{ secrets.GMAIL_USERNAME }}
           password: ${{ secrets.GMAIL_APP_PASSWORD }}
-          subject: Playwright Test Run Failed
+          subject: Playwright Test Run Failed - ${{ job.status }}
           body: |
             Hello,
 
@@ -51,27 +63,19 @@ jobs:
           to: alexander.v.anderson@gmail.com
           from: ${{ secrets.GMAIL_USERNAME }}
 
-  # Daily summary email
+  # Send daily summary email
   daily_summary:
     runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' && github.event.schedule == '0 0 * * *'
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'schedule' && github.event.schedule == '0 0 * * *') # Allow manual triggers or daily runs
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Zip Playwright Report
+      - name: Collect all Playwright reports
         run: |
-          zip -r playwright-report.zip playwright-report/
-        id: zip-report
+          mkdir daily_reports
+          find . -name "playwright-report.zip" -exec cp {} daily_reports/ \;
 
       - name: Send Daily Summary Email
         uses: dawidd6/action-send-mail@v3
@@ -84,10 +88,10 @@ jobs:
           body: |
             Hello,
 
-            Attached is the Playwright HTML report summary for today.
+            Here are all the Playwright HTML reports generated in the last 24 hours.
 
             Regards,
             GitHub Actions
           to: alexander.v.kolesnyk@gmail.com
           from: ${{ secrets.GMAIL_USERNAME }}
-          attachments: playwright-report.zip
+          attachments: daily_reports/* # Attach all reports
