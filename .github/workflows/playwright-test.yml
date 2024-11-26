@@ -1,12 +1,12 @@
-name: Run Playwright Tests and Send Notifications
+name: Run Playwright Tests and Send Report
 
 on:
   schedule:
-    - cron: '0 0 * * *' # Runs daily at midnight UTC
+    - cron: '0 0 * * *' # Runs once a day at midnight UTC
   workflow_dispatch: # Allows manual trigger from the GitHub Actions UI
 
 jobs:
-  # Run Playwright tests
+  # Run Playwright tests and send report
   run_tests:
     runs-on: ubuntu-latest
     steps:
@@ -60,16 +60,8 @@ jobs:
           to: alexander.v.anderson@gmail.com
           from: ${{ secrets.GMAIL_USERNAME }}
 
-  # Send daily report email
-  daily_summary:
-    runs-on: ubuntu-latest
-    needs: run_tests # Ensure the test run completes before sending the email
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Send Daily Report Email
+      - name: Send Playwright Report Email
+        if: success() # Only runs if Playwright tests pass
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
@@ -80,7 +72,7 @@ jobs:
           body: |
             Hello,
 
-            Here is the Playwright test report generated for the day.
+            Please find the attached Playwright HTML test report for today.
 
             Regards,
             GitHub Actions
