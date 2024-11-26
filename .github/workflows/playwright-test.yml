@@ -57,7 +57,7 @@ jobs:
 
             Regards,
             GitHub Actions
-          to: alexander.v.anderson@gmail.com
+          to: alexander.v.anderson@gmail.com, devshantanu@gmail.com, amolmudgundi@gmail.com, suvendra.chakrabarti@gmail.com
           from: ${{ secrets.GMAIL_USERNAME }}
 
       - name: Send Playwright Report Email
@@ -76,6 +76,6 @@ jobs:
 
             Regards,
             GitHub Actions
-          to: alexander.v.anderson@gmail.com
+          to: alexander.v.anderson@gmail.com, devshantanu@gmail.com, amolmudgundi@gmail.com, suvendra.chakrabarti@gmail.com
           from: ${{ secrets.GMAIL_USERNAME }}
           attachments: playwright-report.zip # Attach the Playwright report
