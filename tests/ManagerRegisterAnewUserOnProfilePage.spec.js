@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { faker } from '@faker-js/faker';
+
 test('test', async ({ page }) => {
+  await page.waitForTimeout(10000); // Waits for N second
     await page.goto('https://examd.ai/bsecure/config/');
     // await page.getByRole('link', { name: 'Have an account? Login' }).click();
   await page.getByPlaceholder('eg. Jhon').click();
@@ -10,8 +12,11 @@ test('test', async ({ page }) => {
   await page.getByRole('button', { name: 'Login' }).click();
 
   await page.getByRole('row', { name: 'Western Kentucky wku.edu' }).getByLabel('').check();
+
   await page.getByRole('button', { name: 'Close' }).click();
-  await page.getByRole('row', { name: 'manager Manager Examd me@gmail.com' }).getByLabel('').check();
+
+  // await page.pause();
+  await page.locator('div:nth-child(2) > .ant-spin-nested-loading > .ant-spin-container > .ant-table > .ant-table-container > .ant-table-content > table > .ant-table-tbody > tr > td').first().click();
   await page.getByRole('tab', { name: 'Users and Payments' }).click();
   await page.getByRole('button', { name: 'plus Register new user' }).click();
 
