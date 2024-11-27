@@ -7,8 +7,8 @@ test('test', async ({ page }) => {
   await page.getByLabel('School Name').click();
   await page.getByText('Western Kentucky').click();
 
-  const firstName = faker.name.firstName();
-  const lastName = faker.name.lastName();
+  const firstName = faker.person.firstName();
+  const lastName = faker.person.lastName();
   await page.getByLabel('First Name').click();
   await page.getByLabel('First Name').fill(firstName);
   await page.getByLabel('Last Name').click();
